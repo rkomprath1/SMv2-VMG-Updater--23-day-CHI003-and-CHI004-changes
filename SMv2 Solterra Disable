@@ -1,0 +1,148 @@
+// ==UserScript==
+// @name         SMv2 Solterra Disable
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/VmgSettings.aspx*
+// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// ==/UserScript==
+var optionIds = [];
+var saved = $(":contains('settings have been saved.')");
+
+$(document).ready(function () {
+  // Initialize an array to store the option IDs
+
+  // Check if the option IDs are stored in session storage
+  if (sessionStorage.getItem("optionIds")) {
+    // If they are, get the option IDs from session storage and push them to the array
+    let storedOptionIds = JSON.parse(sessionStorage.getItem("optionIds"));
+    optionIds.push(...storedOptionIds);
+    console.log(optionIds[0]);
+    console.log(sessionStorage.getItem("optionIds"));
+    update();
+  } else if (saved.length == 0) {
+    // If they are not, get the dropdown menu
+    var dropdown = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs");
+
+    // Go through each option in the dropdown menu
+    dropdown.find("option").each(function () {
+      // Get the option text and ID
+      var optionText = $(this).text();
+      var optionId = $(this).val();
+
+      // Check if the option text matches one of the specified strings
+      if (
+        optionText.trim() == "Subaru 5K - EV's - Intermediate (15K)" ||
+        optionText.trim() == "Subaru 5K - EV's - Major 1 (30K)" ||
+        optionText.trim() ==
+          "Subaru 5K - EV's - Major 3 (120K then every 50K)" ||
+        optionText.trim() == "Subaru 5K - EV's - Minor (5K)" ||
+        optionText.trim() == "Subaru 5K - EV's - Major 2 (60K)"
+      ) {
+        // If it does, push the option ID to the array
+        optionIds.push(optionId);
+      }
+    });
+
+    // Store the option IDs in session storage
+    sessionStorage.setItem("optionIds", JSON.stringify(optionIds));
+    console.log(optionIds);
+    location.reload();
+  } else if (saved.length > 0) {
+    var string1Found = false;
+    var string2Found = false;
+    var string3Found = false;
+    var string4Found = false;
+    var string5Found = false;
+
+    $("#ctl00_ctl00_Main_Main_ddlExistingVMGs option").each(function () {
+      if (
+        $(this)
+          .text()
+          .includes("Subaru 5K - EV's - Intermediate (15K) - Disabled (0)")
+      ) {
+        string1Found = true;
+      }
+      if (
+        $(this)
+          .text()
+          .includes("Subaru 5K - EV's - Major 1 (30K) - Disabled (0)")
+      ) {
+        string2Found = true;
+      }
+      if (
+        $(this)
+          .text()
+          .includes("Subaru 5K - EV's - Major 2 (60K) - Disabled (0)")
+      ) {
+        string3Found = true;
+      }
+      if (
+        $(this)
+          .text()
+          .includes(
+            "Subaru 5K - EV's - Major 3 (120K then every 50K) - Disabled (0)"
+          )
+      ) {
+        string4Found = true;
+      }
+      if (
+        $(this).text().includes("Subaru 5K - EV's - Minor (5K) - Disabled (0)")
+      ) {
+        string5Found = true;
+      }
+    });
+
+    if (
+      string1Found &&
+      string2Found &&
+      string3Found &&
+      string4Found &&
+      string5Found
+    ) {
+      // Perform the action here
+      console.log("All of them are configured - next dealership");
+    }
+    nextDealership();
+  }
+
+  // At this point, the optionIds array should contain the IDs of all options that match one of the specified strings
+});
+
+function update() {
+  console.log("update");
+  if ($("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val() != optionIds[0]) {
+    changeAndEdit();
+    //console.log(sessionStorage.optionIds.length)
+    //console.log('change and edit function start')
+  } else if (
+    $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val() == optionIds[0]
+  ) {
+    configureAndSave();
+    //console.log(`sessionStorage length = ${sessionStorage.optionIds.length}`)
+    //console.log(`optionIds length = ${optionIds.length}`)
+    //console.log('configure and save function start')
+    //console.log(sessionStorage.('optionIds')
+  }
+  //
+}
+
+function changeAndEdit() {
+  //console.log('change and edit')
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(optionIds[0]);
+  //console.log(`Current sessionstorage length = ${sessionStorage.optionIds.length}`)
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+}
+
+function configureAndSave() {
+  if (optionIds.length > 1) {
+    //console.log('click save')
+    $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+    optionIds.shift();
+    sessionStorage.setItem("optionIds", JSON.stringify(optionIds));
+    //console.log(`current sessionStorage length = ${sessionStorage.optionIds.length}`)
+  } else if (optionIds.length == 1) {
+    //console.log('last one')
+    $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+    sessionStorage.removeItem("optionIds");
+    //console.log(sessionStorage.optionIds)
+  }
+}
