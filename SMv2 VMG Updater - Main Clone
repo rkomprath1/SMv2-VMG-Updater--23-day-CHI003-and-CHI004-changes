@@ -1,0 +1,162 @@
+// ==UserScript==
+// @name         SMv2 VMG Updater - Main Clone
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/VmgSettings.aspx*
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+
+//status =
+//getVOG is to start
+//status FRSASVOG
+//status FRnonSASVOG
+//status RRSASVOG
+//status RRnonSASVOG
+//status nextVOG
+"use strict";
+
+var saved = $(":contains('settings have been saved.')");
+var vogs0 = sessionStorage.vog;
+var vogs1 = JSON.parse(vogs0);
+var status = sessionStorage.vogNext;
+var segmentation = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection"
+).val();
+var batch = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection"
+).val();
+var SAS = "6454728c-ed6b-4532-98fa-327232d32e81";
+var nonSAS = "fa52d866-4b5a-4374-b671-57f813d7b85a";
+var defalt = "b834fc14-4c47-4740-b2b2-9c682227dcdf";
+var VOGSelector = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val();
+var vogs = [];
+var S2S = "1";
+var RR = "2";
+let segmentationElement = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection"
+);
+let batchType = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection"
+);
+
+console.log(vogs1[0]);
+console.log(vogs1.length);
+console.log(status);
+console.log(sessionStorage.vog);
+
+// get the VOG's and store them in an array. Save them to sessionStorage
+if (vogs1.length == "0" && status == "getVOG") {
+  $(
+    "#ctl00_ctl00_Main_Main_ddlExistingVMGs > optgroup:nth-child(1) option"
+  ).each(function () {
+    var vog = $(this).val();
+    var vogText = $(this).text();
+    if (vogText.indexOf("Disabled") == -1) {
+      vogs.push(vog);
+      sessionStorage.vog = JSON.stringify(vogs);
+      location.reload();
+    }
+  });
+} else if (vogs1.length > 0 && vogs1[0] == VOGSelector && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+if ($("#ctl00_ctl00_Main_Main_pnlGroup").css("opacity") != 0.3) {
+  // S2S change segmentation form "default" to "non-SAS"
+  if (
+    segmentation == defalt &&
+    batch == S2S &&
+    status == "FRSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    segmentationElement.val(SAS).trigger("change");
+    console.log("changing segmentation");
+  }
+  // S2S non-SAS change settings function
+  if (
+    segmentation == SAS &&
+    batch == S2S &&
+    saved.length == 0 &&
+    status == "FRSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    changeSettingsS2S();
+    status = "nextVOG";
+    sessionStorage.vogNext = status;
+  }
+  // Switch to next VOG
+  if (
+    status == "nextVOG" &&
+    saved.length > 0 &&
+    vogs1.length > "1" &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(vogs1[1]).change();
+
+    $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+
+    vogs1.shift();
+    sessionStorage.vog = JSON.stringify(vogs1);
+    console.log(sessionStorage.vog);
+    status = "FRSASVOG";
+    sessionStorage.vogNext = status;
+  } else if (
+    status == "FRSASVOG2" &&
+    saved.length == 0 &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection")
+      .val("1")
+      .change();
+    status = "FRSASVOG";
+    sessionStorage.vogNext = status;
+  } else if (
+    status == "nextVOG" &&
+    batch == S2S &&
+    segmentation == SAS &&
+    saved.length > 0 &&
+    vogs1.length == "1"
+  ) {
+    nextDealership();
+  }
+} else {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(vogs1[0]).change();
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+function changeSettingsS2S() {
+  if (segmentation == SAS) {
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_printDocumentSelector_ddlPrintDocuments"
+    ).val("46b22e75-b5a2-4948-9177-5c4a6aad744f");
+    submitBtn();
+  } else if (segmentation == nonSAS) {
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_coupon1").val(
+      "af451fed-d1be-4841-bfa0-547e75fdc8a3"
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_coupon1").val(
+      "af451fed-d1be-4841-bfa0-547e75fdc8a3"
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_coupon1").val(
+      "af451fed-d1be-4841-bfa0-547e75fdc8a3"
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_coupon1").val(
+      "af451fed-d1be-4841-bfa0-547e75fdc8a3"
+    );
+    submitBtn();
+  }
+}
+function changeSettingsRR() {
+  // Empty
+}
+function submitBtn() {
+  $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+}
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
