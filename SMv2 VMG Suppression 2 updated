@@ -1,0 +1,506 @@
+// ==UserScript==
+// @name         SMv2 VMG Suppression 2 updated
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/VmgSettings.aspx*
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+
+//status =
+//getVOG is to start
+//status FRSASVOG
+//status FRnonSASVOG
+//status RRSASVOG
+//status RRnonSASVOG
+//status nextVOG
+"use strict";
+
+var saved = $(":contains('settings have been saved.')");
+var vogs0 = sessionStorage.vog;
+var vogs1 = JSON.parse(vogs0);
+var status = sessionStorage.vogNext;
+var segmentation = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection"
+).val();
+var batch = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection"
+).val();
+var SAS = "6454728c-ed6b-4532-98fa-327232d32e81";
+var nonSAS = "fa52d866-4b5a-4374-b671-57f813d7b85a";
+var defalt = "b834fc14-4c47-4740-b2b2-9c682227dcdf";
+var VOGSelector = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val();
+var vogs = [];
+var S2S = "1";
+var RR = "2";
+
+console.log(vogs1[0]);
+console.log(vogs1.length);
+console.log(status);
+console.log(sessionStorage.vog);
+
+if (vogs1.length == "0" && status == "getVOG") {
+  $(
+    "#ctl00_ctl00_Main_Main_ddlExistingVMGs > optgroup:nth-child(1) option"
+  ).each(function () {
+    var vog = $(this).val();
+    var vogText = $(this).text();
+    if (vogText.indexOf("Disabled") == -1) {
+      vogs.push(vog);
+      sessionStorage.vog = JSON.stringify(vogs);
+      location.reload();
+    }
+  });
+} else if (vogs1.length > 0 && vogs1[0] == VOGSelector && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+if ($("#ctl00_ctl00_Main_Main_pnlGroup").css("opacity") != 0.3) {
+  if (
+    segmentation == defalt &&
+    batch == S2S &&
+    status == "FRSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+      .val("6454728c-ed6b-4532-98fa-327232d32e81")
+      .change();
+  }
+
+  // S2S SAS
+  if (
+    segmentation == SAS &&
+    batch == S2S &&
+    saved.length == 0 &&
+    status == "FRSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    changeSettingsS2S();
+  } else if (
+    segmentation == SAS &&
+    batch == S2S &&
+    saved.length > 0 &&
+    status == "FRSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+      .val("fa52d866-4b5a-4374-b671-57f813d7b85a")
+      .change();
+    status = "FRnonSASVOG";
+    sessionStorage.vogNext = status;
+  }
+  //S2S non-SAS
+  if (
+    segmentation == nonSAS &&
+    batch == S2S &&
+    saved.length == 0 &&
+    status == "FRnonSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    changeSettingsS2S();
+    status = "RRnonSASVOG";
+    sessionStorage.vogNext = status;
+  } else if (
+    segmentation == nonSAS &&
+    batch == S2S &&
+    saved.length > 0 &&
+    status == "RRnonSASVOG" &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection")
+      .val("2")
+      .change(); // Switch to Return Reminder
+  }
+
+  //RR non-SAS
+  if (
+    status == "RRnonSASVOG" &&
+    batch == RR &&
+    segmentation == nonSAS &&
+    saved.length == 0 &&
+    VOGSelector == vogs1[0]
+  ) {
+    changeSettingsRR();
+    status = "RRSASVOG";
+    sessionStorage.vogNext = status;
+  }
+
+  //RR SAS
+  if (
+    status == "RRSASVOG" &&
+    batch == RR &&
+    segmentation == nonSAS &&
+    saved.length > 0 &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+      .val("6454728c-ed6b-4532-98fa-327232d32e81")
+      .change(); // Switch to SAS
+  } else if (
+    status == "RRSASVOG" &&
+    batch == RR &&
+    segmentation == SAS &&
+    saved.length == 0 &&
+    VOGSelector == vogs1[0]
+  ) {
+    changeSettingsRR();
+    status = "nextVOG";
+    sessionStorage.vogNext = status;
+  }
+
+  // Switch to next VOG
+  if (
+    status == "nextVOG" &&
+    saved.length > 0 &&
+    vogs1.length > "1" &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(vogs1[1]).change();
+
+    $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+
+    vogs1.shift();
+    sessionStorage.vog = JSON.stringify(vogs1);
+    console.log(sessionStorage.vog);
+    status = "FRSASVOG2";
+    sessionStorage.vogNext = status;
+  } else if (
+    status == "FRSASVOG2" &&
+    saved.length == 0 &&
+    VOGSelector == vogs1[0]
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection")
+      .val("1")
+      .change();
+    status = "FRSASVOG";
+    sessionStorage.vogNext = status;
+  } else if (
+    status == "nextVOG" &&
+    batch == RR &&
+    segmentation == SAS &&
+    saved.length > 0 &&
+    vogs1.length == "1"
+  ) {
+    nextDealership();
+  }
+} else {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(vogs1[0]).change();
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  status = "FRSASVOG2";
+  sessionStorage.vogNext = status;
+}
+
+function changeSettingsS2S() {
+  if (segmentation == SAS) {
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    ); // false all the way down originally
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    //  $('#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_cbSuppressMail').prop('checked', false);
+    //  $('#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_cbSuppressMail').prop('checked', false);
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("99b67608-d796-4f24-8cdc-da8fe66c2f30")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("99b67608-d796-4f24-8cdc-da8fe66c2f30")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("99b67608-d796-4f24-8cdc-da8fe66c2f30")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("46b22e75-b5a2-4948-9177-5c4a6aad744f")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("4d79acd3-5e11-423f-adcf-b1b3d52733a6")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("0c2afdd3-f377-4964-83c7-7667ca0587edenac")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("9457baa2-7a08-4f13-b3eb-b5a6d38ebcc7")
+      .trigger("change");
+    submitBtn();
+  } else if (segmentation == nonSAS) {
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    ); // false all the way down originally
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    //  $('#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_cbSuppressMail').prop('checked', false);
+    //  $('#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_cbSuppressMail').prop('checked', false);
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("af7d8184-723f-49ad-8835-a9a71e6dad68")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("af7d8184-723f-49ad-8835-a9a71e6dad68")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("af7d8184-723f-49ad-8835-a9a71e6dad68")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("75f25c01-cb9c-48d2-b18e-1b6ef63aaea3")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("eb9f219b-03e2-421d-97c3-0c3280b77d13")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("7839d770-6042-4fbc-8733-9943dc26d7d8")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("8c299389-3940-437a-af44-1451c6635db0")
+      .trigger("change");
+    submitBtn();
+  }
+}
+function changeSettingsRR() {
+  if (segmentation == SAS) {
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("bb81cd8a-f3d8-4494-990d-166661926a21")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("bb81cd8a-f3d8-4494-990d-166661926a21")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("bb81cd8a-f3d8-4494-990d-166661926a21")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("6a5ae0c3-4874-436a-9f08-1e8f1ede71d9")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("3de783b2-08ed-4ca1-9a6d-a3b4e9e87548")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("5490add7-fd21-4e86-a4c0-77645ef05d33")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("13a6edfc-884f-4918-ba50-16ecfaebf9c1")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("fb06b981-4d8e-43ce-8bdb-f63cd1b4e91d")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("deecf40b-d11d-465e-828c-fc263a6b9ae8")
+      .trigger("change");
+    submitBtn();
+  } else if (segmentation == nonSAS) {
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_cbSuppressMail").prop(
+      "checked",
+      false
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $("#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_cbSuppressMail").prop(
+      "checked",
+      true
+    );
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("3268c613-fe31-4cea-b561-8be48c0b4ca8")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("3268c613-fe31-4cea-b561-8be48c0b4ca8")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("3268c613-fe31-4cea-b561-8be48c0b4ca8")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("6a5ae0c3-4874-436a-9f08-1e8f1ede71d9")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("3de783b2-08ed-4ca1-9a6d-a3b4e9e87548")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("5490add7-fd21-4e86-a4c0-77645ef05d33")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("13a6edfc-884f-4918-ba50-16ecfaebf9c1")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("fb06b981-4d8e-43ce-8bdb-f63cd1b4e91d")
+      .trigger("change");
+    $(
+      "#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_printDocumentSelector_ddlPrintDocuments"
+    )
+      .val("deecf40b-d11d-465e-828c-fc263a6b9ae8")
+      .trigger("change");
+    submitBtn();
+  }
+}
+function submitBtn() {
+  $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+}
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
