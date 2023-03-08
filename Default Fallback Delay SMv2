@@ -1,0 +1,57 @@
+// ==UserScript==
+// @name         Default Fallback Delay SMv2
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=autoloop.us
+// ==/UserScript==
+
+"use strict";
+var state = sessionStorage.state2;
+var saved = $(":contains('Trigger Settings were successfully saved')");
+let defAll = $(
+  "#ctl00_ctl00_Main_Main_loopServiceSettings_Fieldset1 > div:nth-child(9) > table > tbody > tr"
+)
+  .text()
+  .trim();
+let defText = defAll.includes("Default");
+let defDelay = defAll.includes("6");
+console.log(defText + defDelay);
+
+let a = $(
+  "#ctl00_ctl00_Main_Main_loopServiceSettings_Fieldset1 > div:nth-child(9) > table > tbody > tr"
+).length;
+console.log(a);
+
+$("#footer").append(
+  "<button class='float_right' id='manualDealershipChange' type=button>Next dealer</button>"
+);
+$("#manualDealershipChange").click(function () {
+  nextDealership();
+});
+
+if (state == "notnext" && defText != true && defDelay != true) {
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlFallbackMake").val("");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlFallbackDelay").val("6");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_btnAddFallback").click();
+} else if (state == "notnext" && defText != true && defDelay == true) {
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlFallbackMake").val("");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlFallbackDelay").val("6");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_btnAddFallback").click();
+} else if (state == "notnext" && defText == true && defDelay != true) {
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlFallbackMake").val("");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlFallbackDelay").val("6");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_btnAddFallback").click();
+} else if (state == "notnext" && a > 0 && defText == true && defDelay == true) {
+  console.log("Next dealership");
+  console.log(
+    `Default delay configured: ${defText} - Default delay timing: ${
+      defDelay == true ? "6" : "Not 6"
+    }`
+  );
+  nextDealership();
+}
+
+function nextDealership() {
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+  sessionStorage.state2 = "next";
+}
