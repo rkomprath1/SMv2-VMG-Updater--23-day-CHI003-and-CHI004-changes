@@ -1,0 +1,142 @@
+// ==UserScript==
+// @name         SMv2 VMG Suppression
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/VmgSettings.aspx*
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+var saved = $(":contains('settings have been saved.')");
+var vogs0 = sessionStorage.vog;
+var vogs1 = JSON.parse(vogs0);
+var status = sessionStorage.vogNext;
+
+//status =
+//getVOG is to start
+//status FRSASVOG
+//status FRnonSASVOG
+//status RRSASVOG
+//status RRnonSASVOG
+//status nextVOG
+
+console.log(vogs1[0]);
+console.log(status);
+var c = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val();
+var vogs = [];
+console.log(vogs[0]);
+if (vogs1.length == "0" && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs option").each(function () {
+    var vog = $(this).val();
+    vogs.push(vog);
+    sessionStorage.vog = JSON.stringify(vogs);
+    location.reload();
+  });
+} else if (vogs1.length > 0 && vogs1[0] == c && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "b834fc14-4c47-4740-b2b2-9c682227dcdf" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  status == "FRSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+    .val("6454728c-ed6b-4532-98fa-327232d32e81")
+    .change();
+  vogs1.shift();
+  sessionStorage.vog = JSON.stringify(vogs1);
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "6454728c-ed6b-4532-98fa-327232d32e81" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length == 0 &&
+  status == "FRSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail").prop(
+    "checked",
+    false
+  );
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail").prop(
+    "checked",
+    false
+  );
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail").prop(
+    "checked",
+    false
+  );
+  $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "6454728c-ed6b-4532-98fa-327232d32e81" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length > 0 &&
+  status == "FRSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+    .val("fa52d866-4b5a-4374-b671-57f813d7b85a")
+    .change();
+  status = "FRnonSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+//to FRnon-SAS
+if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "fa52d866-4b5a-4374-b671-57f813d7b85a" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length == 0 &&
+  status == "FRnonSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail").prop(
+    "checked",
+    false
+  );
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail").prop(
+    "checked",
+    false
+  );
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail").prop(
+    "checked",
+    false
+  );
+  $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+  status = "nextVOG";
+  sessionStorage.vogNext = status;
+}
+
+if (status == "nextVOG" && saved.length > 0 && vogs1.length > "0") {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(vogs1[0]).change();
+  console.log(vogs1[0]);
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  vogs1.shift();
+  sessionStorage.vog = JSON.stringify(vogs1);
+  console.log(sessionStorage.vog);
+  status = "FRSASVOG2";
+  sessionStorage.vogNext = status;
+} else if (status == "FRSASVOG2" && saved.length == 0) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+    .val("6454728c-ed6b-4532-98fa-327232d32e81")
+    .change();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+if (
+  status == "nextVOG" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "fa52d866-4b5a-4374-b671-57f813d7b85a" &&
+  saved.length > 0 &&
+  vogs1.length == "0"
+) {
+  nextDealership();
+}
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
