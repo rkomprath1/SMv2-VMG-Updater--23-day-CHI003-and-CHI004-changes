@@ -1,0 +1,163 @@
+// ==UserScript==
+// @name         SMv2 Vehicle Make Settings Updater WORKING
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/MakeSettings.aspx*
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+
+//status =
+//getVOG is to start
+//status FRSASVOG
+//status FRnonSASVOG
+//status RRSASVOG
+//status RRnonSASVOG
+//status nextVOG
+
+var saved = $(":contains('settings have been saved.')");
+var vogs0 = sessionStorage.vog;
+var vogs1 = JSON.parse(vogs0);
+var status = sessionStorage.vogNext;
+var segmentation = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection"
+).val();
+var batch = $(
+  "#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection"
+).val();
+var SAS = "6454728c-ed6b-4532-98fa-327232d32e81";
+var nonSAS = "fa52d866-4b5a-4374-b671-57f813d7b85a";
+var defalt = "b834fc14-4c47-4740-b2b2-9c682227dcdf";
+var VOGSelector = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val();
+var vogs = [];
+var S2S = "1";
+var RR = "2";
+
+console.log(vogs1[0]);
+console.log(vogs1.length);
+console.log(status);
+console.log(sessionStorage.vog);
+
+if (vogs1.length == "0" && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_ddlExistingMakes option").each(function () {
+    $("#ctl00_ctl00_Main_Main_ddlExistingMakes")
+      .val("Subaru")
+      .trigger("change");
+    $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+    status = "FRSASVOG";
+    sessionStorage.vogNext = status;
+  });
+}
+
+if ($("#ctl00_ctl00_Main_Main_pnlGroup").css("opacity") != 0.3) {
+  if (segmentation == defalt && batch == S2S && status == "FRSASVOG") {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+      .val("6454728c-ed6b-4532-98fa-327232d32e81")
+      .change();
+  }
+
+  // S2S SAS
+  if (
+    segmentation == SAS &&
+    batch == S2S &&
+    saved.length == 0 &&
+    status == "FRSASVOG"
+  ) {
+    changeSettingsS2S();
+  } else if (
+    segmentation == SAS &&
+    batch == S2S &&
+    saved.length > 0 &&
+    status == "FRSASVOG"
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+      .val("fa52d866-4b5a-4374-b671-57f813d7b85a")
+      .change();
+    status = "FRnonSASVOG";
+    sessionStorage.vogNext = status;
+  }
+  //S2S non-SAS
+  if (
+    segmentation == nonSAS &&
+    batch == S2S &&
+    saved.length == 0 &&
+    status == "FRnonSASVOG"
+  ) {
+    changeSettingsS2S();
+    status = "RRnonSASVOG";
+    sessionStorage.vogNext = status;
+  } else if (
+    segmentation == nonSAS &&
+    batch == S2S &&
+    saved.length > 0 &&
+    status == "RRnonSASVOG"
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection")
+      .val("2")
+      .change(); // Switch to Return Reminder
+  }
+
+  //RR non-SAS
+  if (
+    status == "RRnonSASVOG" &&
+    batch == RR &&
+    segmentation == nonSAS &&
+    saved.length == 0
+  ) {
+    changeSettingsS2S();
+    status = "RRSASVOG";
+    sessionStorage.vogNext = status;
+  }
+
+  //RR SAS
+  if (
+    status == "RRSASVOG" &&
+    batch == RR &&
+    segmentation == nonSAS &&
+    saved.length > 0
+  ) {
+    $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+      .val("6454728c-ed6b-4532-98fa-327232d32e81")
+      .change(); // Switch to SAS
+  } else if (
+    status == "RRSASVOG" &&
+    batch == RR &&
+    segmentation == SAS &&
+    saved.length == 0
+  ) {
+    changeSettingsS2S();
+    status = "nextVOG";
+    sessionStorage.vogNext = status;
+  }
+
+  if (
+    status == "nextVOG" &&
+    batch == RR &&
+    segmentation == SAS &&
+    saved.length > 0
+  ) {
+    nextDealership();
+  }
+}
+
+function changeSettingsS2S() {
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_ddlDelay").val(90);
+  $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+}
+function changeSettingsRR() {
+  /*
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_cbSuppressMail').prop('checked', true);
+    $('#ctl00_ctl00_Main_Main_btnSubmit').click();
+    */
+}
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
