@@ -1,0 +1,26 @@
+// ==UserScript==
+// @name         Subaru batch SMv2
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx
+// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// ==/UserScript==
+var saved = $(":contains('Trigger Settings were successfully saved.')");
+var state = sessionStorage.state2;
+
+if (saved.length == 0 && state == "notnext") {
+  batchSMv2();
+} else if (saved.length > 0 && state == "notnext") {
+  nextDealership();
+}
+
+function batchSMv2() {
+  $(
+    "#ctl00_ctl00_Main_Main_loopServiceSettings_loopNotificationSettings_loopApprovalQueueSettings_cbApprovalQueues"
+  ).prop("checked", true);
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_btnSubmit").click();
+}
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
