@@ -1,0 +1,32 @@
+// ==UserScript==
+// @name         SMv2 Newest Vehicle Year
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+
+var state = sessionStorage.state2;
+var Saved = $(":contains('Trigger Settings were successfully saved.')");
+var b = $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlNewestYear").val();
+var c;
+if (b.val == "N/A") {
+  c = true;
+} else {
+  c = false;
+}
+
+if (state == "notnext" && Saved.length == 0 && c == false) {
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlNewestYear")
+    .val("N/A")
+    .trigger("change");
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_btnSubmit").click();
+} else if (state == "notnext" && Saved.length == 0 && c == true) {
+  nextDealer();
+} else if (state == "notnext" && Saved.length > 0) {
+  nextDealer();
+}
+
+function nextDealer() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
