@@ -1,0 +1,49 @@
+// ==UserScript==
+// @name         SMv2 Op Code Copy SAS SMv1
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/SubaruSasScheduledMaintenance/Settings.aspx
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+var a = sessionStorage.opcodes;
+var state = sessionStorage.state2;
+var Saved = $(":contains('Trigger Settings were successfully saved.')");
+
+if (
+  window.location ==
+    "https://autoloop.us/DMS/App/Notifications/SubaruSasScheduledMaintenance/Settings.aspx" &&
+  state == "notnext"
+) {
+  var b = $("#txtOpCodes").val();
+  sessionStorage.opcodes = JSON.stringify(b);
+  window.location =
+    "https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx";
+  //$('#txtExcludedOpCodes').val(sessionStorage.opcodes.replace(/\"/g, ""));
+}
+
+if (
+  window.location ==
+    "https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx" &&
+  state == "notnext" &&
+  Saved.length == 0
+) {
+  console.log(a);
+
+  //Settings
+  $("#txtOpCodes").val(
+    $("#txtOpCodes").val() + " " + sessionStorage.opcodes.replace(/\"/g, "")
+  );
+  //$('#ctl00_ctl00_Main_Main_loopServiceSettings_btnSubmit').click();
+} else if (
+  window.location ==
+    "https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx" &&
+  state == "notnext" &&
+  Saved.length > 0
+) {
+  reload();
+}
+
+function reload() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
