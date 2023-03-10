@@ -1,0 +1,226 @@
+// ==UserScript==
+// @name         SMv2 Updater VOG Interval Timing
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/VmgSettings.aspx*
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+var saved = $(":contains('settings have been saved.')");
+var vogs0 = sessionStorage.vog;
+var vogs1 = JSON.parse(vogs0);
+var currentVog = sessionStorage.currentVog;
+var status = sessionStorage.vogNext;
+var selectName = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs")
+  .find(":selected")
+  .val();
+var selectText = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs")
+  .find(":selected")
+  .text();
+console.log(currentVog);
+if (currentVog != selectName) {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(currentVog);
+  console.log("it is wrong");
+}
+//status =
+//getVOG is to start
+//status FRSASVOG
+//status FRnonSASVOG
+//status RRSASVOG
+//status RRnonSASVOG
+//status nextVOG
+//var disabled = $('#ctl00_ctl00_Main_Main_ddlExistingVMGs option').text();
+//console.log(disabled)
+console.log(selectName + " this is the current one");
+console.log(selectText + " this is the current one text");
+
+console.log(vogs1[0]);
+console.log(status);
+var c = $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val();
+var vogs = [];
+
+if (vogs1.length == "0" && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs option").each(function () {
+    var name = $(this).text();
+    if (name.indexOf("disabled") > 0) {
+      console.log("contains disabled");
+    } else {
+      var vog = $(this).val();
+      vogs.push(vog);
+      sessionStorage.vog = JSON.stringify(vogs);
+    }
+    location.reload();
+  });
+} else if (vogs1.length > 0 && vogs1[0] == c && status == "getVOG") {
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "b834fc14-4c47-4740-b2b2-9c682227dcdf" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  status == "FRSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+    .val("6454728c-ed6b-4532-98fa-327232d32e81")
+    .change();
+  sessionStorage.vog = JSON.stringify(vogs1);
+  vogs1.shift();
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "6454728c-ed6b-4532-98fa-327232d32e81" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length == 0 &&
+  status == "FRSASVOG"
+) {
+  updateSettingsS2S();
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "6454728c-ed6b-4532-98fa-327232d32e81" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length > 0 &&
+  status == "FRSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+    .val("fa52d866-4b5a-4374-b671-57f813d7b85a")
+    .change();
+  status = "FRnonSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+//to FRSAS
+
+//to FRnon-SAS
+if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "fa52d866-4b5a-4374-b671-57f813d7b85a" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length == 0 &&
+  status == "FRnonSASVOG"
+) {
+  updateSettingsS2S();
+  status = "RRnonSASVOG";
+  sessionStorage.vogNext = status;
+} else if (
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "fa52d866-4b5a-4374-b671-57f813d7b85a" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "1" &&
+  saved.length > 0 &&
+  status == "RRnonSASVOG"
+) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection")
+    .val("2")
+    .change();
+}
+
+//RRnon-SAS
+if (
+  status == "RRnonSASVOG" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "2" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "fa52d866-4b5a-4374-b671-57f813d7b85a" &&
+  saved.length == 0
+) {
+  updateSettingsS2S();
+  status = "RRSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+if (
+  status == "RRSASVOG" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "2" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "fa52d866-4b5a-4374-b671-57f813d7b85a" &&
+  saved.length > 0
+) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection")
+    .val("6454728c-ed6b-4532-98fa-327232d32e81")
+    .change();
+} else if (
+  status == "RRSASVOG" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "2" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "6454728c-ed6b-4532-98fa-327232d32e81" &&
+  saved.length == 0
+) {
+  updateSettingsS2S();
+  status = "nextVOG";
+  sessionStorage.vogNext = status;
+}
+
+if (status == "nextVOG" && saved.length > 0 && vogs1.length > "0") {
+  $("#ctl00_ctl00_Main_Main_ddlExistingVMGs").val(vogs1[0]).change();
+  sessionStorage.currentVog = vogs1[0];
+  $("#ctl00_ctl00_Main_Main_btnEditExisting").click();
+  vogs1.shift();
+  sessionStorage.vog = JSON.stringify(vogs1);
+  console.log(sessionStorage.vog);
+  status = "FRSASVOG2";
+  sessionStorage.vogNext = status;
+} else if (status == "FRSASVOG2" && saved.length == 0) {
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection")
+    .val("1")
+    .change();
+  status = "FRSASVOG";
+  sessionStorage.vogNext = status;
+}
+
+if (
+  status == "nextVOG" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl00_ddlGroupItemSelection").val() ==
+    "2" &&
+  $("#ctl00_ctl00_Main_Main_rptGroup_ctl01_ddlGroupItemSelection").val() ==
+    "6454728c-ed6b-4532-98fa-327232d32e81" &&
+  saved.length > 0 &&
+  vogs1.length == "0"
+) {
+  nextDealership();
+}
+
+function updateSettingsS2S() {
+  /*for (let i = 0; i < 10; i++) {
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl0' + i + '_schedule_cbSuppressMail').prop('checked', true).trigger('change');
+    }*/
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_ddlDelay").val(35);
+  $(
+    "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_printDocumentSelector_ddlPrintDocuments"
+  ).val("99b67608-d796-4f24-8cdc-da8fe66c2f30");
+  $(
+    "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_emailSelector_ddlTemplate"
+  )
+    .val("8d6f04ba-d0ac-46b4-844b-63765f5c762c")
+    .trigger("change");
+  $("#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_ddlDelay").val(23);
+  $(
+    "#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_emailSubject_textBox"
+  ).val("$CustomerName.FirstName, your $vehicle.Model is due for service.");
+  $("#ctl00_ctl00_Main_Main_btnSubmit").click();
+}
+/*
+function updateSettingsRR() {
+//    for (let i = 0; i < 10; i++) {
+//    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl0' + i + '_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl00_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl01_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl02_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl03_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl04_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl05_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl06_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl07_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl08_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    $('#ctl00_ctl00_Main_Main_rptSchedule_ctl09_schedule_cbSuppressMail').prop('checked', false).trigger('change');
+    //}
+    $('#ctl00_ctl00_Main_Main_btnSubmit').click();
+}*/
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
