@@ -1,0 +1,24 @@
+// ==UserScript==
+// @name         Subaru SMv2 New Vehicle Cutoff date script
+// @author       Roy
+// @match        https://autoloop.us/DMS/App/Notifications/ScheduledMaintenanceV2/Settings.aspx
+// @icon         https://www.google.com/s2/favicons?domain=autoloop.us
+// ==/UserScript==
+
+var saved = $(":contains('Trigger Settings were successfully saved.')");
+var state = sessionStorage.state2;
+var error = $(":contains('There was a problem with your submission')");
+
+if (state == "notnext" && saved.length == 0 && error.length == 0) {
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_ddlNewestYear").val(2020);
+  $("#ctl00_ctl00_Main_Main_loopServiceSettings_btnSubmit").click();
+} else if (state == "notnext" && saved.length > 0 && error.length == 0) {
+  nextDealership();
+} else if (state == "notnext" && saved.length == 0 && error.length > 0) {
+  nextDealership();
+}
+
+function nextDealership() {
+  sessionStorage.state2 = "next";
+  window.location.href = "https://autoloop.us/DMS/App/Default.aspx";
+}
